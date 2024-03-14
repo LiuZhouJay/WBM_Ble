@@ -1,0 +1,51 @@
+-- Existing sdkconfig 'D:/Arduino_files/ESP32C3/espdif/peripheral/Nimbleyyy/sdkconfig' renamed to 'D:/Arduino_files/ESP32C3/espdif/peripheral/Nimbleyyy/sdkconfig.old'.
+-- Found Git: E:/ESPIDF/TOOLS/tools/idf-git/2.39.2/cmd/git.exe (found version "2.39.2.windows.1") 
+-- The C compiler identification is GNU 12.2.0
+-- The CXX compiler identification is GNU 12.2.0
+-- The ASM compiler identification is GNU
+-- Found assembler: E:/ESPIDF/TOOLS/tools/riscv32-esp-elf/esp-12.2.0_20230208/riscv32-esp-elf/bin/riscv32-esp-elf-gcc.exe
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: E:/ESPIDF/TOOLS/tools/riscv32-esp-elf/esp-12.2.0_20230208/riscv32-esp-elf/bin/riscv32-esp-elf-gcc.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: E:/ESPIDF/TOOLS/tools/riscv32-esp-elf/esp-12.2.0_20230208/riscv32-esp-elf/bin/riscv32-esp-elf-g++.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- git rev-parse returned 'fatal: not a git repository (or any of the parent directories): .git'
+-- Could not use 'git describe' to determine PROJECT_VER.
+-- Building ESP-IDF components for target esp32c3
+Processing 3 dependencies:
+[1/3] espressif/led_strip (2.5.3)
+[2/3] idf (5.1.2)
+[3/3] nimble_central_utils (*)
+-- Project sdkconfig file D:/Arduino_files/ESP32C3/espdif/peripheral/Nimbleyyy/sdkconfig
+Loading defaults file D:/Arduino_files/ESP32C3/espdif/peripheral/Nimbleyyy/sdkconfig.defaults...
+-- Looking for sys/types.h
+-- Looking for sys/types.h - found
+-- Looking for stdint.h
+-- Looking for stdint.h - found
+-- Looking for stddef.h
+-- Looking for stddef.h - found
+-- Check size of time_t
+-- Check size of time_t - done
+-- Found Python3: e:/ESPIDF/TOOLS/python_env/idf5.1_py3.11_env/Scripts/python.exe (found version "3.11.2") found components: Interpreter 
+-- Performing Test C_COMPILER_SUPPORTS_WFORMAT_SIGNEDNESS
+-- Performing Test C_COMPILER_SUPPORTS_WFORMAT_SIGNEDNESS - Success
+-- App "Nimble" version: 1
+-- Adding linker script D:/Arduino_files/ESP32C3/espdif/peripheral/Nimbleyyy/build/esp-idf/esp_system/ld/memory.ld
+-- Adding linker script E:/ESPIDF/esp-idf/components/esp_system/ld/esp32c3/sections.ld.in
+-- Adding linker script E:/ESPIDF/esp-idf/components/esp_rom/esp32c3/ld/esp32c3.rom.ld
+-- Adding linker script E:/ESPIDF/esp-idf/components/esp_rom/esp32c3/ld/esp32c3.rom.api.ld
+-- Adding linker script E:/ESPIDF/esp-idf/components/esp_rom/esp32c3/ld/esp32c3.rom.libgcc.ld
+-- Adding linker script E:/ESPIDF/esp-idf/components/esp_rom/esp32c3/ld/esp32c3.rom.newlib.ld
+-- Adding linker script E:/ESPIDF/esp-idf/components/esp_rom/esp32c3/ld/esp32c3.rom.version.ld
+-- Adding linker script E:/ESPIDF/esp-idf/components/esp_rom/esp32c3/ld/esp32c3.rom.eco3.ld
+-- Adding linker script E:/ESPIDF/esp-idf/components/soc/esp32c3/ld/esp32c3.peripherals.ld
+-- Components: app_trace app_update bootloader bootloader_support bt cmock console cxx driver efuse esp-tls esp_adc esp_app_format esp_coex esp_common esp_eth esp_event esp_gdbstub esp_hid esp_http_client esp_http_server esp_https_ota esp_https_server esp_hw_support esp_lcd esp_local_ctrl esp_mm esp_netif esp_netif_stack esp_partition esp_phy esp_pm esp_psram esp_ringbuf esp_rom esp_system esp_timer esp_wifi espcoredump espressif__led_strip esptool_py fatfs freertos hal heap http_parser idf_test ieee802154 json log lwip main mbedtls mqtt newlib nimble_central_utils nvs_flash openthread partition_table protobuf-c protocomm pthread riscv sdmmc soc spi_flash spiffs tcp_transport ulp unity usb vfs wear_levelling wifi_provisioning wpa_supplicant
+-- Component paths: E:/ESPIDF/esp-idf/components/app_trace E:/ESPIDF/esp-idf/components/app_update E:/ESPIDF/esp-idf/components/bootloader E:/ESPIDF/esp-idf/components/bootloader_support E:/ESPIDF/esp-idf/components/bt E:/ESPIDF/esp-idf/components/cmock E:/ESPIDF/esp-idf/components/console E:/ESPIDF/esp-idf/components/cxx E:/ESPIDF/esp-idf/components/driver E:/ESPIDF/esp-idf/components/efuse E:/ESPIDF/esp-idf/components/esp-tls E:/ESPIDF/esp-idf/components/esp_adc E:/ESPIDF/esp-idf/components/esp_app_format E:/ESPIDF/esp-idf/components/esp_coex E:/ESPIDF/esp-idf/components/esp_common E:/ESPIDF/esp-idf/components/esp_eth E:/ESPIDF/esp-idf/components/esp_event E:/ESPIDF/esp-idf/components/esp_gdbstub E:/ESPIDF/esp-idf/components/esp_hid E:/ESPIDF/esp-idf/components/esp_http_client E:/ESPIDF/esp-idf/components/esp_http_server E:/ESPIDF/esp-idf/components/esp_https_ota E:/ESPIDF/esp-idf/components/esp_https_server E:/ESPIDF/esp-idf/components/esp_hw_support E:/ESPIDF/esp-idf/components/esp_lcd E:/ESPIDF/esp-idf/components/esp_local_ctrl E:/ESPIDF/esp-idf/components/esp_mm E:/ESPIDF/esp-idf/components/esp_netif E:/ESPIDF/esp-idf/components/esp_netif_stack E:/ESPIDF/esp-idf/components/esp_partition E:/ESPIDF/esp-idf/components/esp_phy E:/ESPIDF/esp-idf/components/esp_pm E:/ESPIDF/esp-idf/components/esp_psram E:/ESPIDF/esp-idf/components/esp_ringbuf E:/ESPIDF/esp-idf/components/esp_rom E:/ESPIDF/esp-idf/components/esp_system E:/ESPIDF/esp-idf/components/esp_timer E:/ESPIDF/esp-idf/components/esp_wifi E:/ESPIDF/esp-idf/components/espcoredump D:/Arduino_files/ESP32C3/espdif/peripheral/Nimbleyyy/managed_components/espressif__led_strip E:/ESPIDF/esp-idf/components/esptool_py E:/ESPIDF/esp-idf/components/fatfs E:/ESPIDF/esp-idf/components/freertos E:/ESPIDF/esp-idf/components/hal E:/ESPIDF/esp-idf/components/heap E:/ESPIDF/esp-idf/components/http_parser E:/ESPIDF/esp-idf/components/idf_test E:/ESPIDF/esp-idf/components/ieee802154 E:/ESPIDF/esp-idf/components/json E:/ESPIDF/esp-idf/components/log E:/ESPIDF/esp-idf/components/lwip D:/Arduino_files/ESP32C3/espdif/peripheral/Nimbleyyy/main E:/ESPIDF/esp-idf/components/mbedtls E:/ESPIDF/esp-idf/components/mqtt E:/ESPIDF/esp-idf/components/newlib E:/ESPIDF/esp-idf/examples/bluetooth/nimble/common/nimble_central_utils E:/ESPIDF/esp-idf/components/nvs_flash E:/ESPIDF/esp-idf/components/openthread E:/ESPIDF/esp-idf/components/partition_table E:/ESPIDF/esp-idf/components/protobuf-c E:/ESPIDF/esp-idf/components/protocomm E:/ESPIDF/esp-idf/components/pthread E:/ESPIDF/esp-idf/components/riscv E:/ESPIDF/esp-idf/components/sdmmc E:/ESPIDF/esp-idf/components/soc E:/ESPIDF/esp-idf/components/spi_flash E:/ESPIDF/esp-idf/components/spiffs E:/ESPIDF/esp-idf/components/tcp_transport E:/ESPIDF/esp-idf/components/ulp E:/ESPIDF/esp-idf/components/unity E:/ESPIDF/esp-idf/components/usb E:/ESPIDF/esp-idf/components/vfs E:/ESPIDF/esp-idf/components/wear_levelling E:/ESPIDF/esp-idf/components/wifi_provisioning E:/ESPIDF/esp-idf/components/wpa_supplicant
+-- Configuring done
+-- Generating done
+-- Build files have been written to: D:/Arduino_files/ESP32C3/espdif/peripheral/Nimbleyyy/build
