@@ -33,7 +33,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
-#include "ble/atts.h"
+// #include "ble/atts.h"
 
 #include "app_rs485.h"
 #include "app_turmass.h"
