@@ -40,51 +40,36 @@
 #include "esp_nimble_hci.h"
 
 static const char *TAG = "Test";
+
+extern uint32_t Terminal_mac;
+
 static const char *model_num = "2222";
-static char  data1[256];
-uint16_t hrs_hrm_handle = 1;
+
+uint16_t service1_char1_handle = 1;
+uint16_t service2_char1_handle = 2;
+uint16_t service2_char2_handle = 3;
+uint16_t service2_char3_handle = 4;
+
 extern  uint16_t conn_handle;
-
-uint16_t attr_handle = 2;
-
+extern char *device_name;
 QueueHandle_t ble_receive_queue = NULL;
 
 extern QueueHandle_t turmass_send_cache_queue;
 
-int ble_gatts_notify(uint16_t conn_handle, uint16_t chr_val_handle);
+void Send_notify_ble(const void *buf);
 
 static int
 gatt_svr_cb1(uint16_t conn_handle, uint16_t attr_handle,
                                 struct ble_gatt_access_ctxt *ctxt, void *arg);
 
 static int 
-gatt_svr_cb3(uint16_t conn_handle, uint16_t attr_handle,
+gatt_svr_cb2(uint16_t conn_handle, uint16_t attr_handle,
                                 struct ble_gatt_access_ctxt *ctxt, void *arg);
 
 //接收网关发送来的信息
 void ble_receive_data(const char *data) {
     if (data != NULL) {
-        // 确保不会溢出 data1 数组
-        size_t len = strlen(data);
-        if (len < sizeof(data1)) {
-            // 复制字符串到 data1
-            strncpy(data1, data, len);
-            data1[len] = '\0'; // 确保字符串以空字符结尾
-            // ESP_LOGI(TAG, "data: %s", data1);
-        } else {
-            // 如果字符串太长，只打印部分内容
-            ESP_LOGI(TAG, "data is too long to be stored in data1");
-        }
-        struct os_mbuf *txom;
-        txom = ble_hs_mbuf_from_flat(data1, strlen(data1));
-        int rc= ble_gatts_notify_custom(conn_handle, attr_handle,txom);
-        if (rc == 0) {
-            MODLOG_DFLT(INFO, "Notification sent successfully");
-        } else {
-            MODLOG_DFLT(INFO, "Error in sending notification rc = %d", rc);
-        }
-        // ble_gatts_set_attr_value(attr_handle,len,(uint8_t*)data1);
-        // ble_gatts_set_value();
+        Send_notify_ble(data);
     } else {
         ESP_LOGI(TAG, "data pointer is NULL");
     }
@@ -102,11 +87,22 @@ void write_queue(const char *data, uint16_t len)
 
 }
 
+void Send_notify_ble(const void *buf){
+    struct os_mbuf *txom;
+    txom = ble_hs_mbuf_from_flat(buf, strlen(buf));
+    int rc= ble_gatts_notify_custom(conn_handle,service1_char1_handle,txom);
+    if (rc == 0) {
+        MODLOG_DFLT(INFO, "Notification sent successfully");
+    } else {
+        MODLOG_DFLT(INFO, "Error in sending notification rc = %d", rc);
+    }
+}
+
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
     {
-        /* ******************Service1*******************
-        服务的类型有两种：主要服务和次要服务。
-        主要服务通常包含了实际的特征值，而次要服务则用于组织和管理主要服务。 */
+        /* ******************Service1***************************
+        ********该服务主要用来读取特定消息和接收蓝牙通知************
+        */
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
         /*BLE_UUID16_DECLARE 是 ESP-IDF 中用于声明 16 位 UUID 的宏。
         它用于将 16 位的 UUID 值转换为适合在代码中使用的格式*/
@@ -116,34 +112,40 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 /* Characteristic1*/
                 .uuid = BLE_UUID16_DECLARE(GATT_SEVER_1_CHARACTERISTIC_1_UUID),
                 .access_cb = gatt_svr_cb1,
-                .val_handle = &hrs_hrm_handle,
-                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE,
+                .val_handle = &service1_char1_handle,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
             }, {
                 0, /* No more characteristics in this service */
             },
         }
     },
     {
-        /* ******************Service3********************/
+        /* ******************Service2***************************
+        ********该服务主要用来改变终端的mac地址和终端名称以及向终端发送消息***********
+        */
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
-        .uuid = BLE_UUID16_DECLARE(GATT_SEVER_3_UUID),
+        .uuid = BLE_UUID16_DECLARE(GATT_SEVER_2_UUID),
         .characteristics = (struct ble_gatt_chr_def[])
         { {
-                /* Characteristic1 */
-                .uuid = BLE_UUID16_DECLARE(GATT_SEVER_3_CHARACTERISTIC_1_UUID),
-                .access_cb = gatt_svr_cb3,
-                .flags = BLE_GATT_CHR_F_NOTIFY | BLE_GATT_CHR_F_READ,
-                // .flags = BLE_GATT_CHR_F_READ,
-                .val_handle=&attr_handle,
-                // .descriptors =(struct ble_gatt_dsc_def[])
-                // {
-                //     {
-                //     .uuid = BLE_UUID16_DECLARE(GATT_CLIENT_CHAR_CFG_UUID),
-                //     .access_cb = NULL,
-                //     },{
-                //     0, /* No more descriptors in this characteristics */
-                //     }
-                // }
+                /* 特征值1 ***** 主要用来向网关发送消息***********/
+                .uuid = BLE_UUID16_DECLARE(GATT_SEVER_2_CHARACTERISTIC_1_UUID),
+                .access_cb = gatt_svr_cb2,
+                .flags = BLE_GATT_CHR_F_WRITE,
+                .val_handle=&service2_char1_handle,
+            },
+            {
+                /* 特征值1 ***** 更改设备名称***********/
+                .uuid = BLE_UUID16_DECLARE(GATT_SEVER_2_CHARACTERISTIC_2_UUID),
+                .access_cb = gatt_svr_cb2,
+                .flags = BLE_GATT_CHR_F_WRITE,
+                .val_handle=&service2_char2_handle,
+            },
+            {
+                /* 特征值1 ***** 更改设备mac地址***********/
+                .uuid = BLE_UUID16_DECLARE(GATT_SEVER_2_CHARACTERISTIC_3_UUID),
+                .access_cb = gatt_svr_cb2,
+                .flags = BLE_GATT_CHR_F_WRITE,
+                .val_handle=&service2_char3_handle,
             }, {
                 0, /* No more characteristics in this service */
             },
@@ -169,51 +171,55 @@ BLE_GATT_ACCESS_OP_READ_DSC:
 这个操作类型表示对 GATT 描述符（Descriptor）进行读取操作。
 描述符是与特征值相关联的附加信息单元，用于提供关于特征值的额外信息，例如格式、单位等。
 当一个设备想要读取特征值的描述符时，就会使用 BLE_GATT_ACCESS_OP_READ_DSC 操作类型。*/
+
 static int
 gatt_svr_cb1(uint16_t conn_handle, uint16_t attr_handle,
                                struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
-    static char data[256];
     //判断是读事件还是写事件
     if (ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR){
         ESP_LOGI(TAG, "Sever1 ch1 Doing RADE");
-        os_mbuf_append(ctxt->om, (const void*)data1, strlen(data1));
-    }
-
-    if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR){
-
-        if(ctxt->om->om_len <= sizeof(data)){
-            strncpy(data,(char *)(ctxt->om->om_data),ctxt->om->om_len);
-            data[ctxt->om->om_len] = 0;
-            ESP_LOGI(TAG, "data: %s",data);
-            write_queue(data,ctxt->om->om_len);
-        }else{
-            char *value = (char *)malloc(ctxt->om->om_len);
-            strncpy(value,(char *)(ctxt->om->om_data),ctxt->om->om_len);
-            value[ctxt->om->om_len] = 0;
-            ESP_LOGI(TAG, "value: %s",value);
-            write_queue(value,ctxt->om->om_len);
-            free(value);
-        }
+        os_mbuf_append(ctxt->om, (const void*)model_num, strlen(model_num));
     }
     return 0;
 }
 
-static int gatt_svr_cb3(uint16_t conn_handle, uint16_t attr_handle,
+static int gatt_svr_cb2(uint16_t conn_handle, uint16_t attr_handle,
                        struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
-    //判断是读事件还是写事件
-    if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR){
-        ESP_LOGI(TAG, "Sever3 ch2 Doing Write");
-        ESP_LOGI(TAG, "Sever3 ch2 Received date: %d",*ctxt->om->om_data);
+    static char data[256];
+    uint16_t uuid;
+    uuid = ble_uuid_u16(ctxt->chr->uuid);
+    //判断特征值UUID，再判断事件
+    if (uuid == GATT_SEVER_2_CHARACTERISTIC_1_UUID) {
+        //判断是读事件还是写事件
+        if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR){
+
+            if(ctxt->om->om_len <= sizeof(data)){
+                strncpy(data,(char *)(ctxt->om->om_data),ctxt->om->om_len);
+                data[ctxt->om->om_len] = 0;
+                ESP_LOGI(TAG, "data: %s",data);
+                write_queue(data,ctxt->om->om_len);
+            }else{
+                char *value = (char *)malloc(ctxt->om->om_len);
+                strncpy(value,(char *)(ctxt->om->om_data),ctxt->om->om_len);
+                value[ctxt->om->om_len] = 0;
+                ESP_LOGI(TAG, "value: %s",value);
+                write_queue(value,ctxt->om->om_len);
+                free(value);
+            }
+        }
+    }
+    if (uuid == GATT_SEVER_2_CHARACTERISTIC_2_UUID) {
+        strncpy(device_name,(char *)(ctxt->om->om_data),ctxt->om->om_len);
+       ESP_LOGI(TAG, "Sever2 ch2 Received date: %s",device_name);
         
     }
 
-    if (ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR){
-        os_mbuf_append(ctxt->om, model_num, strlen(model_num));
+    if (uuid == GATT_SEVER_2_CHARACTERISTIC_3_UUID) {
+       Terminal_mac = (uint32_t)*ctxt->om->om_data ;
+        ESP_LOGI(TAG, "Terminal_mac: %lu",Terminal_mac);
     }
-
-
     return 0;
 }
 

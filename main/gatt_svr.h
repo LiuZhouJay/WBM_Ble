@@ -28,14 +28,13 @@ extern "C" {
 #endif
 
 /* Heart-rate configuration */
-#define GATT_SEVER_1_UUID                       0x210A
-#define GATT_SEVER_1_CHARACTERISTIC_1_UUID      0xAAAA
+#define GATT_SEVER_1_UUID                       0x2000
+#define GATT_SEVER_1_CHARACTERISTIC_1_UUID      0x200A
 
-#define GATT_SEVER_3_UUID                       0x210B
-#define GATT_SEVER_3_CHARACTERISTIC_1_UUID      0xBBBB
-#define GATT_CLIENT_CHAR_CFG_UUID               0x2900
-
-extern uint16_t hr_hrm_handle;
+#define GATT_SEVER_2_UUID                       0x2100
+#define GATT_SEVER_2_CHARACTERISTIC_1_UUID      0x210A
+#define GATT_SEVER_2_CHARACTERISTIC_2_UUID      0x210B
+#define GATT_SEVER_2_CHARACTERISTIC_3_UUID      0x210C
 
 struct ble_hs_cfg;
 struct ble_gatt_register_ctxt;
