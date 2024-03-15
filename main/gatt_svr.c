@@ -33,18 +33,21 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
-// #include "ble/atts.h"
 
 #include "app_rs485.h"
 #include "app_turmass.h"
 
+#include "esp_nimble_hci.h"
+
 static const char *TAG = "Test";
 static const char *model_num = "2222";
 static char  data1[256];
-uint16_t hrs_hrm_handle;
+uint16_t hrs_hrm_handle = 1;
 extern  uint16_t conn_handle;
 
-uint16_t attr_handle;
+uint16_t attr_handle = 2;
+
+QueueHandle_t ble_receive_queue = NULL;
 
 extern QueueHandle_t turmass_send_cache_queue;
 
@@ -57,8 +60,6 @@ gatt_svr_cb1(uint16_t conn_handle, uint16_t attr_handle,
 static int 
 gatt_svr_cb3(uint16_t conn_handle, uint16_t attr_handle,
                                 struct ble_gatt_access_ctxt *ctxt, void *arg);
-
-static void send_notification(uint16_t conn_handle, uint16_t attr_handle);
 
 //接收网关发送来的信息
 void ble_receive_data(const char *data) {
@@ -74,7 +75,16 @@ void ble_receive_data(const char *data) {
             // 如果字符串太长，只打印部分内容
             ESP_LOGI(TAG, "data is too long to be stored in data1");
         }
-        ble_gatts_set_value(attr_handle,len,(uint8_t*)data1);
+        struct os_mbuf *txom;
+        txom = ble_hs_mbuf_from_flat(data1, strlen(data1));
+        int rc= ble_gatts_notify_custom(conn_handle, attr_handle,txom);
+        if (rc == 0) {
+            MODLOG_DFLT(INFO, "Notification sent successfully");
+        } else {
+            MODLOG_DFLT(INFO, "Error in sending notification rc = %d", rc);
+        }
+        // ble_gatts_set_attr_value(attr_handle,len,(uint8_t*)data1);
+        // ble_gatts_set_value();
     } else {
         ESP_LOGI(TAG, "data pointer is NULL");
     }
@@ -94,7 +104,7 @@ void write_queue(const char *data, uint16_t len)
 
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
     {
-        /* Service1
+        /* ******************Service1*******************
         服务的类型有两种：主要服务和次要服务。
         主要服务通常包含了实际的特征值，而次要服务则用于组织和管理主要服务。 */
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
@@ -107,14 +117,14 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 .uuid = BLE_UUID16_DECLARE(GATT_SEVER_1_CHARACTERISTIC_1_UUID),
                 .access_cb = gatt_svr_cb1,
                 .val_handle = &hrs_hrm_handle,
-                .flags = BLE_GATT_CHR_F_READ,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE,
             }, {
                 0, /* No more characteristics in this service */
             },
         }
     },
     {
-        /* Service3*/
+        /* ******************Service3********************/
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
         .uuid = BLE_UUID16_DECLARE(GATT_SEVER_3_UUID),
         .characteristics = (struct ble_gatt_chr_def[])
@@ -130,7 +140,6 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 //     {
                 //     .uuid = BLE_UUID16_DECLARE(GATT_CLIENT_CHAR_CFG_UUID),
                 //     .access_cb = NULL,
-                //     .att_flags =  BLE_GATT_CHR_F_WRITE , // 读写属性 
                 //     },{
                 //     0, /* No more descriptors in this characteristics */
                 //     }
@@ -194,12 +203,6 @@ static int gatt_svr_cb3(uint16_t conn_handle, uint16_t attr_handle,
                        struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
     //判断是读事件还是写事件
-    if (ctxt->op == BLE_GATT_CHR_F_NOTIFY){
-        ESP_LOGI(TAG, "Sever3 ch1 Doing NOTIFY");
-        // ble_gatts_notify_custom(conn_handle, attr_handle, NULL);
-        send_notification(conn_handle,attr_handle);
-    }
-
     if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR){
         ESP_LOGI(TAG, "Sever3 ch2 Doing Write");
         ESP_LOGI(TAG, "Sever3 ch2 Received date: %d",*ctxt->om->om_data);
@@ -212,24 +215,6 @@ static int gatt_svr_cb3(uint16_t conn_handle, uint16_t attr_handle,
 
 
     return 0;
-}
-//发送通知的函数
-static void send_notification(uint16_t conn_handle, uint16_t attr_handle) {
-    
-    //const uint8_t data[] = "Test notify"; // 填写要发送的数据内容
-    //uint16_t len = sizeof(data); // 填写要发送的数据长度
-
-    // while(1){
-        // 发送通知消息
-        int rc = ble_gatts_notify(conn_handle, attr_handle);
-        if (rc != BLE_HS_ENOENT) {
-        // 消息发送失败
-            ESP_LOGI(TAG, "Send notify failed, rc=%d", rc);
-        }else{
-            ESP_LOGI(TAG, "Send notify success");
-        }
-        vTaskDelay(100); 
-    // }
 }
 
 int
@@ -254,6 +239,10 @@ gatt_svr_init(void)
     真正的 GATT 服务注册会在 Host 协议栈真正启动时调用的 ble_gatts_start() 函数中注册。*/
 
      //xTaskCreate(send_notification, "Send_notification", 2048, NULL, 2, NULL);
+
+    //  ble_receive_queue = xQueueCreate(1024 * 3, 1);
+    // xTaskCreate(ble_receive, "ble_receive_data", 2048, NULL, 2, NULL);
+    
 
     return 0;
 }
