@@ -23,4 +23,13 @@ idf.py set-target <chip_name>
 
 2.When the device is connected to Bluetooth, it can send data to the gateway via Bluetooth
 
-3.After the device connects to the terminal through Bluetooth, the terminal provides a service interface that can modify the Bluetooth name and mac address of the terminal. However, some problems may occur during modification.
+3.Added ota upgrade code file.
+
+4.The file contains a Hex array file corresponding to.bin, which can be upgraded ota over Bluetooth.
+
+## problem
+
+1.After the device connects to the terminal through Bluetooth, the terminal provides a service interface that can modify the Bluetooth name and mac address of the terminal. However, some problems may occur during modification.
+
+2.Currently only hex array files of existing firmware can be upgraded
+

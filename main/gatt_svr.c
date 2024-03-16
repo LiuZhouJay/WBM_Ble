@@ -34,6 +34,8 @@
 #include "freertos/task.h"
 #include "driver/gpio.h"
 
+#include "ota.h"
+
 #include "app_rs485.h"
 #include "app_turmass.h"
 
@@ -211,13 +213,15 @@ static int gatt_svr_cb2(uint16_t conn_handle, uint16_t attr_handle,
         }
     }
     if (uuid == GATT_SEVER_2_CHARACTERISTIC_2_UUID) {
-        strncpy(device_name,(char *)(ctxt->om->om_data),ctxt->om->om_len);
-       ESP_LOGI(TAG, "Sever2 ch2 Received date: %s",device_name);
+        //strncpy(device_name,(char *)(ctxt->om->om_data),ctxt->om->om_len);
+        ota_init();
+        ESP_LOGI(TAG, "Sever2 ch2 Received date: %s",device_name);
         
     }
 
     if (uuid == GATT_SEVER_2_CHARACTERISTIC_3_UUID) {
-       Terminal_mac = (uint32_t)*ctxt->om->om_data ;
+        ota_upgrade();
+    //    Terminal_mac = (uint32_t)*ctxt->om->om_data ;
         ESP_LOGI(TAG, "Terminal_mac: %lu",Terminal_mac);
     }
     return 0;
