@@ -19,8 +19,18 @@
 #include "app_ble.h"
 #include "app_turmass.h"
 
+#include "nvs_flash.h"
 void app_main(void)
 {
+    // 初始化NVS
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        // 如果NVS存储满或发现新版本，擦除NVS并重新初始化
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+
     app_rs485_init();
     app_turmass_init();
     app_ble_init();
@@ -29,4 +39,3 @@ void app_main(void)
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
-// 2B 52 53 54 3A 20 6F 6B 0D 0A 41 54 5F 4F 4B FF 54 75 72 4D 61 73 73 2E 54 75 72 4D 61 73 73 2E 54 75 72 4D 61 73 73 2E 50 32 50 20 41 54 20 43 4D 44 21 0D 0A 

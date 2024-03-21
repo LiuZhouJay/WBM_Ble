@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 int app_ble_init(void);
+void modification_name(const char* value);
 
 #ifdef __cplusplus
 }

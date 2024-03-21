@@ -4,7 +4,10 @@
 #include "esp_log.h"
 #include "app_turmass.h"
 #include "freertos/queue.h"
-#include "gatt_svr.c"
+#include "app_gatt_svr.c"
+
+#include "app_localdata.h"
+
 #include <ctype.h>
 #define DEBUG_FLAG 1
 
@@ -21,6 +24,8 @@ static QueueHandle_t uart1_receive_queue;
 QueueHandle_t turmass_send_cache_queue = NULL;
 static SemaphoreHandle_t turmass_return_ok_semaphore = NULL;
 static SemaphoreHandle_t turmass_return_sendfinish_semaphore = NULL;
+
+uint32_t Terminal_mac = 0x11111111;
 
 // data.c
 void Turmass_send_data_ble(const char *data) {
@@ -135,7 +140,7 @@ static void turmass_send_task(void *arg)
     static struct app_turmass_data_t data;
 
     data.head = 0xA5A5A5A5;
-    data.mac = 0x22222222;
+    data.mac = Terminal_mac;
     data.sequence = 0;
     tkm_101_init();
     while (1)
@@ -271,6 +276,8 @@ static void turmass_receive_task(void *arg)
 
 int app_turmass_init(void)
 {
+    get_new_macaddr(Terminal_mac);
+
     uart_config_t uart_config;
 
     uart_config.baud_rate = 115200;

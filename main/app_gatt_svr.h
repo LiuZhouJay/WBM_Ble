@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef H_BLEHR_SENSOR_
-#define H_BLEHR_SENSOR_
+#ifndef H_APP_GATT_SVR_
+#define H_APP_GATT_SVR_
 
 #include "nimble/ble.h"
 #include "modlog/modlog.h"
@@ -35,6 +35,7 @@ extern "C" {
 #define GATT_SEVER_2_CHARACTERISTIC_1_UUID      0x210A
 #define GATT_SEVER_2_CHARACTERISTIC_2_UUID      0x210B
 #define GATT_SEVER_2_CHARACTERISTIC_3_UUID      0x210C
+#define GATT_SEVER_2_CHARACTERISTIC_4_UUID      0x210D
 
 struct ble_hs_cfg;
 struct ble_gatt_register_ctxt;

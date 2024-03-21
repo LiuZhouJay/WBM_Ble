@@ -1,51 +1,34 @@
-
-//第二版，两个服务
-
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
-
-#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include "host/ble_hs.h"
 #include "host/ble_uuid.h"
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
-#include "gatt_svr.h"
+#include "app_gatt_svr.h"
 #include "esp_log.h"
 #include "host/ble_gatt.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "driver/gpio.h"
-
-#include "ota.h"
-
-#include "app_rs485.h"
-#include "app_turmass.h"
-
 #include "esp_nimble_hci.h"
+
+#include "app_ota.h"
+#include "app_ble.h"
+#include "app_localdata.h"
+#include "hello_world.h"
+#include "app_ble_function.h"
+
+extern unsigned char hello_world_bin[];
+extern unsigned int hello_world_bin_len;
+
+
+extern unsigned char hello_world_bin2[];
+extern unsigned int hello_world_bin_len2;
 
 static const char *TAG = "Test";
 
 extern uint32_t Terminal_mac;
 
-static const char *model_num = "2222";
+static const char *model_num = "44444";
 
 uint16_t service1_char1_handle = 1;
 uint16_t service2_char1_handle = 2;
@@ -100,6 +83,31 @@ void Send_notify_ble(const void *buf){
     }
 }
 
+uint32_t decimalToHex(uint32_t decimal) {
+    // 我们需要8个十六进制位来表示32位的uint32_t
+    uint32_t hexDigits[8];
+    int index = 0;
+
+    // 处理每一位，直到数值为0
+    while (decimal > 0) {
+        uint32_t hexDigit = decimal % 16; // 获取当前的十六进制位
+        // 将十进制的数值转换为字符
+        char hexChar = (hexDigit < 10) ? (hexDigit + '0') : (hexDigit - 10 + 'A');
+        // 存储十六进制字符
+        hexDigits[index++] = hexChar;
+        // 移除已经处理的十六进制位
+        decimal /= 16;
+    }
+
+    // 由于我们是从低位开始处理的，所以需要反转数组
+    uint32_t hexValue = 0;
+    for (int i = index - 1; i >= 0; --i) {
+        hexValue = (hexValue << 4) | (hexDigits[i] - (hexDigits[i] >= 'A' ? 55 : 48));
+    }
+    ESP_LOGI(TAG, "value213: %lu", hexValue);
+    return hexValue;
+}
+
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
     {
         /* ******************Service1***************************
@@ -148,6 +156,13 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 .access_cb = gatt_svr_cb2,
                 .flags = BLE_GATT_CHR_F_WRITE,
                 .val_handle=&service2_char3_handle,
+            },
+            {
+                /* 特征值1 ***** 更改设备mac地址***********/
+                .uuid = BLE_UUID16_DECLARE(GATT_SEVER_2_CHARACTERISTIC_4_UUID),
+                .access_cb = gatt_svr_cb2,
+                .flags = BLE_GATT_CHR_F_WRITE,
+                .val_handle=&service2_char3_handle,
             }, {
                 0, /* No more characteristics in this service */
             },
@@ -189,44 +204,98 @@ gatt_svr_cb1(uint16_t conn_handle, uint16_t attr_handle,
 static int gatt_svr_cb2(uint16_t conn_handle, uint16_t attr_handle,
                        struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
-    static char data[256];
     uint16_t uuid;
     uuid = ble_uuid_u16(ctxt->chr->uuid);
     //判断特征值UUID，再判断事件
     if (uuid == GATT_SEVER_2_CHARACTERISTIC_1_UUID) {
         //判断是读事件还是写事件
-        if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR){
+        const uint8_t* data = ctxt->om->om_data;
+        uint16_t data_len = ctxt->om->om_len;
 
-            if(ctxt->om->om_len <= sizeof(data)){
-                strncpy(data,(char *)(ctxt->om->om_data),ctxt->om->om_len);
-                data[ctxt->om->om_len] = 0;
-                ESP_LOGI(TAG, "data: %s",data);
-                write_queue(data,ctxt->om->om_len);
-            }else{
-                char *value = (char *)malloc(ctxt->om->om_len);
-                strncpy(value,(char *)(ctxt->om->om_data),ctxt->om->om_len);
-                value[ctxt->om->om_len] = 0;
-                ESP_LOGI(TAG, "value: %s",value);
-                write_queue(value,ctxt->om->om_len);
-                free(value);
+        // 分配一个新的缓冲区来存储转换后的字符串
+        // 这里假设每个字符占用2个字节
+        char* str_buf = (char*)malloc(data_len + 1);
+        if (!str_buf) {
+            ESP_LOGE(TAG, "Memory allocation failed");
+        }
+
+        // 将UTF-16小端编码的数据转换为C字符串
+        for (uint16_t i = 0; i < data_len; i += 2) {
+            uint16_t char_code = data[i] | (data[i + 1] << 8); // 组合两个字节为一个16位的Unicode字符
+            // 确保字符码不超过ASCII范围
+            if (char_code <= 0x7F) {
+                str_buf[i / 2] = (char)char_code;
+            } else {
+                // 遇到非法字符，替换为问号
+                str_buf[i / 2] = '?';
             }
         }
+        str_buf[data_len / 2] = '\0'; // 添加字符串终止符
+        // 打印转换后的字符串
+        ESP_LOGI(TAG, "Received string: %s", str_buf);
+        write_queue(str_buf,ctxt->om->om_len);
+        free(str_buf);     
+            // ota_init();
     }
     if (uuid == GATT_SEVER_2_CHARACTERISTIC_2_UUID) {
-        //strncpy(device_name,(char *)(ctxt->om->om_data),ctxt->om->om_len);
-        ota_init();
-        ESP_LOGI(TAG, "Sever2 ch2 Received date: %s",device_name);
-        
+        const uint8_t* data = ctxt->om->om_data;
+        uint16_t data_len = ctxt->om->om_len;
+
+        // 分配一个新的缓冲区来存储转换后的字符串
+        // 这里假设每个字符占用2个字节
+        char* str_buf = (char*)malloc(data_len + 1);
+        if (!str_buf) {
+            ESP_LOGE(TAG, "Memory allocation failed");
+        }
+
+        // 将UTF-16小端编码的数据转换为C字符串
+        for (uint16_t i = 0; i < data_len; i += 2) {
+            uint16_t char_code = data[i] | (data[i + 1] << 8); // 组合两个字节为一个16位的Unicode字符
+            // 确保字符码不超过ASCII范围
+            if (char_code <= 0x7F) {
+                str_buf[i / 2] = (char)char_code;
+            } else {
+                // 遇到非法字符，替换为问号
+                str_buf[i / 2] = '?';
+            }
+        }
+        str_buf[data_len / 2] = '\0'; // 添加字符串终止符
+
+        // 打印转换后的字符串
+        ESP_LOGI(TAG, "Received string: %s", str_buf);
+        modification_name(str_buf); 
+        // 释放之前分配的字符串缓冲区
+        free(str_buf);     
     }
 
     if (uuid == GATT_SEVER_2_CHARACTERISTIC_3_UUID) {
-        ota_upgrade();
-    //    Terminal_mac = (uint32_t)*ctxt->om->om_data ;
-        ESP_LOGI(TAG, "Terminal_mac: %lu",Terminal_mac);
+        // 假设 om_data 是接收到的 ArrayBuffer // 读取 Uint32 值，false 表示使用小端字节   
+        // 假设 om_data 是接收到的 ArrayBuffer
+        // 并且 om_len 是接收到的数据长度
+       if (ctxt->om->om_len == 4) { // 确保接收到的数据长度为4字节
+            uint32_t value;
+            const uint8_t* data = ctxt->om->om_data;
+            // 根据字节序解析Uint32值
+            // 这里假设小端序，如果大端序需要调整
+            value = (uint32_t)data[0] | (uint32_t)(data[1] << 8) | (uint32_t)(data[2] << 16) | (uint32_t)(data[3] << 24);
+            ESP_LOGI(TAG, "Received value: %lu", value);
+            decimalToHex(value);
+        }
+    }
+
+    if (uuid == GATT_SEVER_2_CHARACTERISTIC_4_UUID) {
+        if (ctxt->om->om_len == 2) { // 确保接收到的数据长度为2字节
+            uint16_t value;
+            const uint8_t* data = ctxt->om->om_data;
+            // 根据字节序解析Uint16值
+            // 这里假设小端序，如果大端序需要调整
+            value = (uint16_t)data[0] | (uint16_t)(data[1] << 8);
+            ESP_LOGI(TAG, "Received value: %d", value);
+            ble_function_select(value);
+        }
     }
     return 0;
 }
-
 int
 gatt_svr_init(void)
 {
