@@ -27,9 +27,22 @@ idf.py set-target <chip_name>
 
 4.The file contains a Hex array file corresponding to.bin, which can be upgraded ota over Bluetooth.
 
+## 3.24
+5.The terminal can communicate with the gateway and send notifications to the applet
+
+6.The data format of the terminal and the applet is complete, and the applet can change the terminal name and mac address.
+7.Two service.There are two and four characteristics.
+
+8.NVS is completed,can be used to store the terminal name and mac address.
+
+
 ## problem
 
-1.After the device connects to the terminal through Bluetooth, the terminal provides a service interface that can modify the Bluetooth name and mac address of the terminal. However, some problems may occur during modification.
+1.Currently only hex array files of existing firmware can be upgraded
 
-2.Currently only hex array files of existing firmware can be upgraded
+2.Changing the terminal mac address can be a bit of a problem
 
+
+## version --matters need attention
+
+This version only adds a feature to the service and modifies README.md compared to the previous version (version --6)
