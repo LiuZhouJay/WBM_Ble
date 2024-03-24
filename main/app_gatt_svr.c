@@ -31,10 +31,11 @@ extern uint32_t Terminal_mac;
 static const char *model_num = "44444";
 
 uint16_t service1_char1_handle = 1;
-uint16_t service2_char1_handle = 2;
-uint16_t service2_char2_handle = 3;
-uint16_t service2_char3_handle = 4;
-
+uint16_t service1_char2_handle = 2;
+uint16_t service2_char1_handle = 3;
+uint16_t service2_char2_handle = 4;
+uint16_t service2_char3_handle = 5;
+uint16_t service2_char4_handle = 6;
 extern  uint16_t conn_handle;
 extern char *device_name;
 QueueHandle_t ble_receive_queue = NULL;
@@ -123,7 +124,14 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 .uuid = BLE_UUID16_DECLARE(GATT_SEVER_1_CHARACTERISTIC_1_UUID),
                 .access_cb = gatt_svr_cb1,
                 .val_handle = &service1_char1_handle,
-                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
+                .flags =BLE_GATT_CHR_F_NOTIFY,
+            }, 
+            {
+                /* Characteristic2*/
+                .uuid = BLE_UUID16_DECLARE(GATT_SEVER_1_CHARACTERISTIC_2_UUID),
+                .access_cb = gatt_svr_cb1,
+                .val_handle = &service1_char2_handle,
+                .flags = BLE_GATT_CHR_F_READ,
             }, {
                 0, /* No more characteristics in this service */
             },
@@ -162,7 +170,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 .uuid = BLE_UUID16_DECLARE(GATT_SEVER_2_CHARACTERISTIC_4_UUID),
                 .access_cb = gatt_svr_cb2,
                 .flags = BLE_GATT_CHR_F_WRITE,
-                .val_handle=&service2_char3_handle,
+                .val_handle=&service2_char4_handle,
             }, {
                 0, /* No more characteristics in this service */
             },

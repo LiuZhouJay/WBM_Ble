@@ -30,6 +30,7 @@ extern "C" {
 /* Heart-rate configuration */
 #define GATT_SEVER_1_UUID                       0x2000
 #define GATT_SEVER_1_CHARACTERISTIC_1_UUID      0x200A
+#define GATT_SEVER_1_CHARACTERISTIC_2_UUID      0x200B
 
 #define GATT_SEVER_2_UUID                       0x2100
 #define GATT_SEVER_2_CHARACTERISTIC_1_UUID      0x210A
